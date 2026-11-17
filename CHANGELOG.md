@@ -4,6 +4,9 @@ All notable changes to this project are recorded here. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+- Strava athlete ID is stored as a string from `id_str`, ready for Strava's 64-bit IDs (from 2027-06-01). Nothing used the ID, so behavior is unchanged; any future use of activity IDs should read `id_str` too.
+
 ## [0.7.1] - 2026-11-10
 
 Documentation for sharing: anyone can build their own from this repo.

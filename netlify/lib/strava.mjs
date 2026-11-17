@@ -41,10 +41,17 @@ function keep(t) {
   return { access_token: t.access_token, refresh_token: t.refresh_token, expires_at: t.expires_at };
 }
 
+// Strava IDs can exceed 2^53 after 2027-06-01, which JSON.parse rounds. Use the id_str
+// string field for any ID (athlete or activity); never do math or comparisons on numeric id.
+function idStr(o) {
+  if (!o) return null;
+  return o.id_str || (o.id != null ? String(o.id) : null);
+}
+
 // Exchange the OAuth code from the callback; returns the athlete's first name.
 export async function exchangeCode(code, grantedScope) {
   const t = await tokenRequest({ code, grant_type: 'authorization_code' });
-  await store().setJSON(TOKEN_KEY, { ...keep(t), scope: grantedScope || '', athlete: t.athlete ? t.athlete.id : null, saved_at: Date.now() });
+  await store().setJSON(TOKEN_KEY, { ...keep(t), scope: grantedScope || '', athlete: idStr(t.athlete), saved_at: Date.now() });
   return t.athlete ? t.athlete.firstname : '';
 }
 
