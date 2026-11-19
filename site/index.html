@@ -41,8 +41,14 @@
     <!-- 4. 10-day forecast strip -->
     <div class="card forecast"><div id="forecast" class="fc"></div></div>
 
-    <!-- 5. Events | commute + tasks -->
-    <div class="lower">
+    <!-- 5. Surf | rivers (shown when features.surf / features.rivers) -->
+    <div id="conditions" class="lower">
+      <div id="surf" class="card card-surf"></div>
+      <div id="rivers" class="card card-rivers"></div>
+    </div>
+
+    <!-- 5b. Events | commute + tasks (hidden unless features.calendar; kept so the code still works) -->
+    <div id="legacy" class="lower hidden">
       <div class="card card-events">
         <div class="card-title">Today</div>
         <div id="events"></div>

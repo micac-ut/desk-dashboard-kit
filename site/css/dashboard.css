@@ -636,3 +636,23 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 }
 .night-clock { font-size: 240px; font-weight: 300; color: #3a3a38; letter-spacing: -7px; line-height: 1; }
 .night-date  { font-size: 36px; color: #2a2a28; margin-top: 22px; }
+
+
+/* ---------- Surf and rivers ---------- */
+
+.card-surf { flex: 1; min-width: 0; margin-right: 16px; display: flex; flex-direction: column; }
+.card-rivers { width: 250px; display: flex; flex-direction: column; }
+.surf-row { display: flex; align-items: center; flex: 1; border-top: 1px solid #26262a; }
+.surf-name { width: 150px; white-space: nowrap; }
+.surf-spot { font-size: 23px; }
+.surf-area { font-size: 16px; color: #9a9a96; }
+.surf-size { width: 80px; font-size: 20px; color: #9a9a96; }
+.surf-size b { font-size: 34px; font-weight: normal; color: #ececea; }
+.surf-sub { font-size: 16px; color: #9a9a96; margin-top: 2px; white-space: nowrap; }
+.surf-mid { flex: 1; min-width: 0; font-size: 18px; white-space: nowrap; overflow: hidden; }
+.surf-rating { font-size: 18px; text-transform: uppercase; border: 2px solid; border-radius: 14px; padding: 2px 8px; margin-left: 8px; font-size: 16px; }
+.river-row { flex: 1; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid #26262a; }
+.river-name { font-size: 22px; }
+.river-flow { font-size: 38px; margin-top: 4px; }
+.river-unit { font-size: 18px; color: #9a9a96; }
+.muted-note { font-size: 18px; color: #6c6c69; margin-top: 8px; }

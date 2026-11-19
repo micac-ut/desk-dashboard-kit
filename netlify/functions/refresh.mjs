@@ -2,12 +2,24 @@
 import * as strava from '../lib/strava.mjs';
 import * as google from '../lib/google.mjs';
 import { refreshWeather } from '../lib/weather.mjs';
+import { refreshSurf } from '../lib/surf.mjs';
+import { refreshRivers } from '../lib/rivers.mjs';
 
 export default async () => {
   try {
     await refreshWeather();
   } catch (err) {
     console.error('Weather refresh failed', err);
+  }
+  try {
+    await refreshSurf();
+  } catch (err) {
+    console.error('Surf refresh failed', err);
+  }
+  try {
+    await refreshRivers();
+  } catch (err) {
+    console.error('Rivers refresh failed', err);
   }
   try {
     if (await strava.isConnected()) await strava.refreshWeek();

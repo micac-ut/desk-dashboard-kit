@@ -2,7 +2,7 @@
 import { getStore } from '@netlify/blobs';
 import { timingSafeEqual } from 'node:crypto';
 
-export const TZ = process.env.DASH_TZ || 'America/Denver';
+export const TZ = process.env.DASH_TZ || 'America/Los_Angeles';
 
 // One store for everything: tokens, OAuth state, cached data.
 export function store() {

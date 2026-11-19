@@ -8,6 +8,12 @@ window.buildMockData = function (base) {
     return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m, 0, 0).getTime();
   }
 
+  // Tide time as the server sends it: local clock string.
+  function tide(h, m, ft, hi) {
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return { t: base.getFullYear() + '-' + p(base.getMonth() + 1) + '-' + p(base.getDate()) + ' ' + p(h) + ':' + p(m), ft: ft, hi: hi };
+  }
+
   var weekIdx = (base.getDay() + 6) % 7; // Monday = 0
   var sample = [14.2, 0, 18.6, 12.3, 9.8, 32.5, 21.0];
   var daily = [];
@@ -67,6 +73,32 @@ window.buildMockData = function (base) {
       daily: daily,
       year: { year: base.getFullYear(), miles: 2187, rides: 143 },
       load: { ctl: 48, atl: 57, tsb: -9 }
+    },
+
+    surf: {
+      fetchedAt: base.getTime(),
+      spots: [
+        { id: 'jacks', name: 'Jacks', area: 'Santa Cruz', rating: 'fair', offshoreDeg: 355,
+          swell: { hsFt: 5.4, periodS: 12, dirDeg: 285, swellFt: 4.8, swellPeriodS: 12, swellDirDeg: 285, next: [5.8, 6.2] },
+          wind: { mph: 5, gustMph: 9, fromDeg: 350 },
+          tides: [tide(5, 51, 4.3, true), tide(11, 46, 2.4, false), tide(16, 56, 3.6, true), tide(23, 17, 1.0, false)] },
+        { id: 'ob', name: 'Ocean Beach', area: 'San Francisco', rating: 'good', offshoreDeg: 80,
+          swell: { hsFt: 6.1, periodS: 14, dirDeg: 288, swellFt: 5.6, swellPeriodS: 14, swellDirDeg: 288, next: [6.4, 6.0] },
+          wind: { mph: 7, gustMph: 12, fromDeg: 70 },
+          tides: [tide(6, 45, 4.9, true), tide(12, 45, 2.4, false), tide(18, 3, 4.1, true), tide(23, 59, 0.9, false)] },
+        { id: 'pacifica', name: 'Pacifica', area: 'Linda Mar', rating: 'poor', offshoreDeg: 75,
+          swell: { hsFt: 3.2, periodS: 8, dirDeg: 270, swellFt: 2.9, swellPeriodS: 8, swellDirDeg: 270, next: [3.0, 2.6] },
+          wind: { mph: 14, gustMph: 21, fromDeg: 260 },
+          tides: [tide(5, 54, 4.6, true), tide(11, 59, 2.4, false), tide(17, 9, 3.9, true), tide(23, 32, 1.1, false)] }
+      ]
+    },
+
+    rivers: {
+      fetchedAt: base.getTime(),
+      rivers: [
+        { id: 'chili', name: 'Chili Bar', sub: 'South Fork American', cfs: 1070, rating: 'ok', trend: 'steady', readAt: '8:15pm', source: 'mock' },
+        { id: 'natoma', name: 'Lower American', sub: 'Below Lake Natoma', cfs: 1260, rating: 'ok', trend: 'falling', readAt: '8:00pm', source: 'mock' }
+      ]
     },
 
     weather: {

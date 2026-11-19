@@ -158,6 +158,83 @@
       '<path d="M12 20V4M6 10l6-6 6 6"/></g></svg>';
   }
 
+  // ---------- surf and rivers ----------
+
+  function ratingColor(r) {
+    var s = C.surf;
+    return r === 'good' ? s.goodColor : (r === 'fair' ? s.fairColor : s.poorColor);
+  }
+  function angDiff(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
+  function compass16(deg) {
+    var N = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return N[Math.round(deg / 22.5) % 16];
+  }
+  // "2026-11-18 04:55" -> Date in the page's local clock.
+  function parseTide(s) {
+    var m = /^(\d+)-(\d+)-(\d+) (\d+):(\d+)/.exec(s);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0) : null;
+  }
+  function nextTide(tides, n) {
+    for (var i = 0; i < tides.length; i++) {
+      var d = parseTide(tides[i].t);
+      if (d && d.getTime() > n.getTime()) { return { d: d, hi: tides[i].hi, ft: tides[i].ft }; }
+    }
+    return null;
+  }
+  function hmShort(d) { return hm(d) + (d.getHours() < 12 ? 'a' : 'p'); }
+
+  function renderSurf(n) {
+    var el = $('surf');
+    if (C.features.surf === false) { el.className = 'hidden'; return; }
+    var s = D.surf, html = '<div class="card-title">Surf</div>';
+    if (!s || !s.spots || !s.spots.length) { el.innerHTML = html + '<div class="muted-note">No surf data yet</div>'; return; }
+    for (var i = 0; i < s.spots.length; i++) {
+      var p = s.spots[i], sw = p.swell, w = p.wind, t = nextTide(p.tides || [], n);
+      var color = ratingColor(p.rating);
+      var trend = '';
+      if (sw.next && sw.next[1] != null && sw.hsFt != null) {
+        var dlt = sw.next[1] - sw.hsFt;
+        trend = dlt > 0.7 ? ' &uarr;' : (dlt < -0.7 ? ' &darr;' : '');
+      }
+      var windHtml = '';
+      if (w) {
+        var off = angDiff(w.fromDeg, p.offshoreDeg);
+        var wc = (w.mph <= 6 || off <= 70) ? '#8fd8a8' : (off >= 110 ? '#f2b36b' : '#ececea');
+        var kind = w.mph <= 6 ? 'light' : (off <= 70 ? 'off' : (off >= 110 ? 'on' : 'cross'));
+        windHtml = '<span style="color:' + wc + '">' + compass16(w.fromDeg) + ' ' + w.mph + ' ' + kind + '</span>';
+      }
+      var tideHtml = t ? (t.hi ? 'Hi ' : 'Lo ') + hmShort(t.d) + ' ' + t.ft + 'ft' : '';
+      html += '<div class="surf-row">' +
+        '<div class="surf-name"><div class="surf-spot">' + esc(p.name) + '</div><div class="surf-area">' + esc(p.area) + '</div></div>' +
+        '<div class="surf-size"><b>' + (sw.hsFt == null ? '--' : Math.round(sw.hsFt)) + '</b> ft' + trend +
+          '<div class="surf-sub">' + (sw.periodS == null ? '' : sw.periodS + 's ') + (sw.dirDeg == null ? '' : compass16(sw.dirDeg)) + '</div></div>' +
+        '<div class="surf-mid"><div>' + windHtml + '</div><div class="surf-sub">' + tideHtml + '</div></div>' +
+        '<div class="surf-rating" style="color:' + color + ';border-color:' + color + '">' + (p.rating || '--') + '</div>' +
+        '</div>';
+    }
+    if (D.surfStale) { html += '<div class="muted-note">Showing older data</div>'; }
+    el.innerHTML = html;
+  }
+
+  function renderRivers() {
+    var el = $('rivers');
+    if (C.features.rivers === false) { el.className = 'hidden'; return; }
+    var r = D.rivers, html = '<div class="card-title">Rivers</div>';
+    if (!r || !r.rivers || !r.rivers.length) { el.innerHTML = html + '<div class="muted-note">No river data yet</div>'; return; }
+    var col = { low: '#9a9a96', ok: '#8fd8a8', high: '#f2b36b', flood: '#f28b82' };
+    var label = { low: 'Low', ok: 'Runnable', high: 'High', flood: 'Flood' };
+    var arrow = { rising: '&uarr;', falling: '&darr;', steady: '' };
+    for (var i = 0; i < r.rivers.length; i++) {
+      var v = r.rivers[i];
+      var c = v.rating ? col[v.rating] : '#ececea';
+      html += '<div class="river-row"><div class="river-name">' + esc(v.name) + '<div class="surf-sub">' + esc(v.sub || '') + '</div></div>' +
+        '<div class="river-flow" style="color:' + c + '">' + (v.cfs == null ? '--' : comma(v.cfs)) +
+        '<span class="river-unit"> cfs ' + (arrow[v.trend] || '') + '</span>' +
+        '<div class="surf-sub" style="color:' + c + '">' + (v.rating ? label[v.rating] : '') + (v.readAt ? ' &middot; ' + esc(v.readAt) : '') + '</div></div></div>';
+    }
+    el.innerHTML = html;
+  }
+
   // ---------- calendar ----------
 
   function todaysEvents(n) {
@@ -533,6 +610,7 @@
 
   function activeTakeovers(n) {
     var list = [], tc = C.takeover, t = n.getTime();
+    if (!C.features.calendar) { return list; } // no calendar, no meeting alerts or commute last-call
     var evs = todaysEvents(n), i;
     for (i = 0; i < evs.length; i++) {
       var e = evs[i];
@@ -736,6 +814,15 @@
         renderRadar();
         updateSky();
       }
+      if (data.surf) {
+        D.surf = data.surf;
+        D.surfStale = !!data.surf.stale;
+        renderSurf(now());
+      }
+      if (data.rivers) {
+        D.rivers = data.rivers;
+        renderRivers();
+      }
       if (data.google) {
         D.events = data.google.events || [];
         D.tasks = data.google.tasks || [];
@@ -769,6 +856,8 @@
   }
 
   function renderAll(n) {
+    renderSurf(n);
+    renderRivers();
     renderEvents(n);
     renderTasks();
     renderStrava(n);
@@ -786,6 +875,7 @@
       lastMinute = minute;
       renderEvents(n);
       renderCommute(n);
+      renderSurf(n); // next-tide text moves forward
       if (minute % 5 === 0) { updateSky(); } // the sun moves; repaint the sky every 5 minutes
     }
     renderOverlay(n);
@@ -811,6 +901,7 @@
       persist = false; // previews shouldn't leave state behind
     }
     load();
+    if (C.features.calendar) { $('legacy').className = 'lower'; $('conditions').className = 'hidden'; }
 
     // Phase 3 replaces this with a poll of the cached JSON (every 2-5 min).
     D = window.buildMockData(now());

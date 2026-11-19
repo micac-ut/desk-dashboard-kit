@@ -4,11 +4,13 @@ import { hasKey, json } from '../lib/common.mjs';
 import * as strava from '../lib/strava.mjs';
 import * as google from '../lib/google.mjs';
 import { getWeather } from '../lib/weather.mjs';
+import { getSurf } from '../lib/surf.mjs';
+import { getRivers } from '../lib/rivers.mjs';
 
 export default async (req) => {
   if (!hasKey(req)) return json({ error: 'unauthorized' }, 401);
 
-  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, status: {} };
+  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, surf: null, rivers: null, status: {} };
 
   try {
     out.weather = await getWeather();
@@ -16,6 +18,22 @@ export default async (req) => {
   } catch (err) {
     console.error(err);
     out.status.weather = 'error';
+  }
+
+  try {
+    out.surf = await getSurf();
+    out.status.surf = out.surf ? (out.surf.stale ? 'stale' : 'ok') : 'error';
+  } catch (err) {
+    console.error(err);
+    out.status.surf = 'error';
+  }
+
+  try {
+    out.rivers = await getRivers();
+    out.status.rivers = out.rivers ? (out.rivers.stale ? 'stale' : 'ok') : 'error';
+  } catch (err) {
+    console.error(err);
+    out.status.rivers = 'error';
   }
 
   try {

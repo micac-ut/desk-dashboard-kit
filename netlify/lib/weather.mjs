@@ -5,10 +5,10 @@ import { store, TZ } from './common.mjs';
 const CACHE_KEY = 'weather/now';
 const MAX_AGE = 20 * 60 * 1000;
 
-// Forecast point: set DASH_LAT / DASH_LON (defaults are a placeholder in central Denver) (no need for more precision for weather).
+// Forecast point: set DASH_LAT / DASH_LON (defaults are central San Francisco) (no need for more precision for weather).
 // Override with DASH_LAT / DASH_LON env vars.
-const LAT = Number(process.env.DASH_LAT || 39.75);
-const LON = Number(process.env.DASH_LON || -105.00);
+const LAT = Number(process.env.DASH_LAT || 37.77);
+const LON = Number(process.env.DASH_LON || -122.42);
 
 // NWS asks for a User-Agent with contact info so they can reach you about problems.
 // Set DASH_CONTACT (an email or URL) in Netlify; it isn't committed to the repo.

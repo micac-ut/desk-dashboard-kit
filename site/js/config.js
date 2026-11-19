@@ -6,7 +6,13 @@
  */
 window.DASH_CONFIG = {
   // IANA time zone. The page uses the frame's clock (set the frame to this zone); the server uses DASH_TZ.
-  timeZone: 'America/Denver',
+  timeZone: 'America/Los_Angeles',
+
+  // Turn whole sections on or off. The calendar and commute code stays in place, just hidden.
+  features: { calendar: false, commute: false, surf: true, rivers: true },
+
+  // Surf and river cards (data comes from /api/data; spots and gauges are set in netlify/lib/surf.mjs and rivers.mjs).
+  surf: { goodColor: '#8fd8a8', fairColor: '#f2b36b', poorColor: '#9a9a96' },
 
   calendars: {
     work:     { name: 'Work', color: '#F26A2E', mine: true },
@@ -47,9 +53,9 @@ window.DASH_CONFIG = {
     // Work and home for the map markers. ROUNDED to 2 decimals (~1 km): this file is public.
     // Keep exact coordinates out of the repo (e.g. in git-ignored private/).
     locations: {
-      // EDIT: your own, 2 decimals. Placeholders: central Denver (Union Station, City Park).
-      work: { name: 'Work', lat: 39.75, lon: -105.00 },
-      home: { name: 'Home', lat: 39.75, lon: -104.95 }
+      // EDIT: your own, 2 decimals. Placeholders: central San Francisco.
+      work: { name: 'Work', lat: 37.79, lon: -122.40 },
+      home: { name: 'Home', lat: 37.76, lon: -122.44 }
     },
     minZoom: 5,
     maxZoom: 13,
