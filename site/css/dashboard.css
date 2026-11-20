@@ -653,7 +653,7 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 .surf-rating { font-size: 18px; text-transform: uppercase; border: 2px solid; border-radius: 14px; padding: 2px 8px; margin-left: 8px; font-size: 16px; }
 .river-row { flex: 1; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid #26262a; }
 .river-name { font-size: 22px; }
-.river-flow { font-size: 38px; margin-top: 4px; }
+.river-flow { font-size: 32px; margin-top: 2px; }
 .river-unit { font-size: 18px; color: #9a9a96; }
 .muted-note { font-size: 18px; color: #6c6c69; margin-top: 8px; }
 
@@ -667,3 +667,7 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
   padding: 3px 9px; font-size: 16px; line-height: 20px; color: #ececea; text-align: left;
 }
 .sp-box b { font-size: 17px; font-weight: normal; }
+
+/* Dog events: golden tag and paw. */
+.chip-dog { border-color: #E3A94A; color: #E3A94A; }
+.ev.dog .ev-title { color: #E3A94A; }

@@ -39,10 +39,11 @@ window.buildMockData = function (base) {
     generatedAt: base.getTime(),
 
     events: [
-      { id: 'e0', cal: 'family',   title: 'Recycling pickup', allDay: true, start: t(0, 0), end: t(23, 59) },
+      { id: 'e0', cal: 'family',   title: 'Heartworm pill', allDay: true, dog: true, start: t(0, 0), end: t(23, 59) },
       { id: 'e1', cal: 'work',     title: 'Standup', type: 'meeting', start: t(9, 0), end: t(9, 30), where: 'Google Meet', counts: true },
       { id: 'e2', cal: 'personal', title: 'Lunch with a friend', type: 'lunch', start: t(11, 30), end: t(12, 30), where: 'Downtown', counts: true },
       { id: 'e3', cal: 'work',     title: 'Design review', type: 'meeting', start: t(14, 0), end: t(14, 45), where: 'Zoom', counts: true, link: 'https://www.google.com/calendar/' },
+      { id: 'e3b', cal: 'family',  title: 'Dog meds', type: 'meeting', start: t(15, 30), end: t(15, 45), where: '', counts: true, dog: true },
       { id: 'e4', cal: 'work',     title: 'Vendor call', type: 'call', start: t(16, 15), end: t(16, 45), where: 'Phone', counts: true },
       { id: 'e5', cal: 'family',   title: "Kid's soccer", type: 'meeting', start: t(17, 0), end: t(18, 0), where: 'Rec center', counts: false },
       { id: 'e6', cal: 'work',     title: 'Call with Dana', type: 'call', start: t(17, 30), end: t(17, 45), where: 'Phone', counts: true },

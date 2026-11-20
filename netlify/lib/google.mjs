@@ -1,6 +1,6 @@
 // Google Calendar + Tasks (read-only): OAuth tokens in Blobs, today's events and tasks cached.
 import { store, TZ } from './common.mjs';
-import { CALENDARS, NAME_VARIANTS, FAMILY_KEYWORDS } from './calendars.mjs';
+import { CALENDARS, NAME_VARIANTS, FAMILY_KEYWORDS, DOG_WORDS } from './calendars.mjs';
 
 const TOKEN_KEY = 'google/tokens';
 const CACHE_KEY = 'google/today';
@@ -116,6 +116,9 @@ function where(e) {
   return loc.split('\n')[0].slice(0, 60);
 }
 
+const DOG_RE = new RegExp('\\b(' + DOG_WORDS.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'i');
+function isDog(e) { return DOG_RE.test(e.summary || ''); }
+
 function familyCounts(e) {
   const title = e.summary || '';
   for (const n of NAME_VARIANTS) { if (new RegExp('\\b' + n + '\\b', 'i').test(title)) return true; }
@@ -132,6 +135,7 @@ function shape(e, cfg) {
   const self = (e.attendees || []).find((a) => a.self);
   const declined = Boolean(self && self.responseStatus === 'declined');
   const free = e.transparency === 'transparent';
+  const dog = isDog(e);
   let counts = false;
   if (!allDay && !declined && !free) {
     if (cfg.role === 'mine') counts = true;
@@ -142,7 +146,7 @@ function shape(e, cfg) {
     description: (e.description || '').slice(0, 500), allDay, start, end,
     // For all-day events, the page only needs the date string.
     day: allDay ? e.start.date : null,
-    where: where(e), type: eventType(e), counts, declined, free, recurringId: e.recurringEventId || null,
+    where: where(e), type: eventType(e), counts: counts || (dog && !declined), dog, declined, free, recurringId: e.recurringEventId || null,
     // Opens the event in Google Calendar (used on desktop only; the frame never navigates).
     link: /^https:\/\/(www\.)?google\.com\/calendar\//.test(e.htmlLink || '') ? e.htmlLink : null
   };

@@ -255,16 +255,29 @@
   // must never navigate the kiosk away, so links are plain text there.
   var CAN_LINK = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
 
+  var DOG_COLOR = '#E3A94A';
+  // Drawn paw: the frame's old font may lack the dog emoji.
+  function pawIcon(size) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:6px"><g fill="' + DOG_COLOR + '">' +
+      '<ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2.2" ry="3"/><ellipse cx="9.5" cy="6.5" rx="2.2" ry="3"/>' +
+      '<ellipse cx="14.5" cy="6.5" rx="2.2" ry="3"/><ellipse cx="18.5" cy="11" rx="2.2" ry="3"/></g></svg>';
+  }
+  function chipHtml(e) {
+    return e.dog ? '<span class="chip chip-dog">' + pawIcon(18) + esc(cleanTitle(e.title)) + '</span>'
+      : '<span class="chip">' + esc(cleanTitle(e.title)) + '</span>';
+  }
+
   function eventRow(e, n, showNow) {
     var cal = C.calendars[e.cal] || { color: '#9a9a96', mine: true };
     var s = new Date(e.start), en = new Date(e.end);
     var cls = 'ev';
     if (!e.counts) { cls += ' family'; }
     if (showNow && s <= n) { cls += ' current'; }
-    var inner = '<div class="ev-bar" style="background:' + cal.color + '"></div>' +
+    if (e.dog) { cls += ' dog'; }
+    var inner = '<div class="ev-bar" style="background:' + (e.dog ? DOG_COLOR : cal.color) + '"></div>' +
       '<div class="ev-body"><div class="ev-time">' + hm(s) + ' – ' + hmap(en) +
       (showNow && s <= n && en > n ? '<span class="ev-tag">Now</span>' : '') + '</div>' +
-      '<div class="ev-title">' + esc(cleanTitle(e.title)) + '</div></div>';
+      '<div class="ev-title">' + (e.dog ? pawIcon(22) : '') + esc(cleanTitle(e.title)) + '</div></div>';
     if (CAN_LINK && e.link) {
       return '<a class="' + cls + ' ev-link" href="' + esc(e.link) + '" target="_blank" rel="noopener" title="Open in Google Calendar">' +
         inner + '</a>';
@@ -278,7 +291,7 @@
     for (i = 0; i < evs.length; i++) {
       e = evs[i];
       if (e.allDay) {
-        chips += '<span class="chip">' + esc(cleanTitle(e.title)) + '</span>';
+        chips += chipHtml(e);
         continue;
       }
       // Finished events collapse into one "N earlier" line to keep the rest of the day on screen.
@@ -291,7 +304,7 @@
     var next = todaysEvents(tmr), nextRows = '', nextChips = '';
     for (i = 0; i < next.length; i++) {
       e = next[i];
-      if (e.allDay) { nextChips += '<span class="chip">' + esc(cleanTitle(e.title)) + '</span>'; }
+      if (e.allDay) { nextChips += chipHtml(e); }
       else { nextRows += eventRow(e, n, false); }
     }
     var tomorrow = (nextRows || nextChips) ? '<div class="day-head">Tomorrow · ' + DAYS3[tmr.getDay()] + '</div>' +
@@ -611,7 +624,7 @@
 
   function activeTakeovers(n) {
     var list = [], tc = C.takeover, t = n.getTime();
-    if (!C.features.calendar) { return list; } // no calendar, no meeting alerts or commute last-call
+    if (!C.features.calendar || C.features.alerts === false) { return list; } // no calendar or alerts off: no full-screen takeovers
     var evs = todaysEvents(n), i;
     for (i = 0; i < evs.length; i++) {
       var e = evs[i];
@@ -624,7 +637,7 @@
       if (!pulse && S.snoozedUntil[e.id] > t) { continue; }
       list.push({ kind: 'event', id: e.id, key: key, ev: e, due: e.start, pulse: pulse });
     }
-    var cm = commuteModel(n);
+    var cm = C.features.commute === false ? null : commuteModel(n);
     if (cm) {
       var since = minsBetween(cm.quickLeaveBy, n);
       var ckey = 'commute:' + dayKey(n);
@@ -824,6 +837,13 @@
         D.rivers = data.rivers;
         renderRivers();
       }
+      if (!data.google && data.status && data.status.google === 'not-connected') {
+        // Live site, Google not connected yet: show an empty day, not the sample events.
+        D.events = [];
+        D.tasks = [];
+        renderEvents(now());
+        renderTasks();
+      }
       if (data.google) {
         D.events = data.google.events || [];
         D.tasks = data.google.tasks || [];
@@ -902,7 +922,16 @@
       persist = false; // previews shouldn't leave state behind
     }
     load();
-    if (C.features.calendar) { $('legacy').className = 'lower'; $('conditions').className = 'hidden'; }
+    if (C.features.calendar) {
+      $('legacy').className = 'lower';
+      $('conditions').style.flex = '0 0 292px'; // Surf + Rivers keep their height; Today takes what's left
+      var side = C.features.commute !== false || C.features.tasks !== false;
+      $('lower-right').className = side ? 'lower-right' : 'hidden';
+      if (!side) { document.querySelector('.card-events').style.marginRight = '0'; }
+      if (C.features.commute === false) { $('commute').className = 'hidden'; }
+      if (C.features.tasks === false) { document.querySelector('.card-tasks').className = 'hidden'; }
+    }
+    if (C.features.strava === false) { $('strava').className = 'hidden'; }
 
     // Phase 3 replaces this with a poll of the cached JSON (every 2-5 min).
     D = window.buildMockData(now());
