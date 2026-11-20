@@ -210,6 +210,31 @@
     el.innerHTML = html;
   }
 
+  // ---------- TV ----------
+
+  function fmtAirdate(iso, n) {
+    var d = new Date(iso);
+    var days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() -
+      new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime()) / 86400000);
+    var when = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : days > 1 && days < 7 ? DAYS3[d.getDay()] : MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate();
+    return when + ' ' + hmap(d);
+  }
+
+  function renderTv(n) {
+    var el = $('tv');
+    if (C.features.tv === false || !D.tv) { el.className = 'hidden'; return; }
+    var html = '<div class="card-title">New episodes</div>';
+    var shows = D.tv.shows || [];
+    if (!shows.length) { html += '<div class="muted-note">No show data</div>'; }
+    for (var i = 0; i < shows.length; i++) {
+      var s = shows[i];
+      var when = s.ended ? 'Ended' : !s.next ? 'TBA' : s.next.tba ? fmtAirdate(s.next.airstamp, n).split(' ')[0] + ' (TBA)' : fmtAirdate(s.next.airstamp, n);
+      var soon = s.next && !s.ended && (new Date(s.next.airstamp).getTime() - n.getTime()) < 86400000 && (new Date(s.next.airstamp).getTime() - n.getTime()) > -3 * 3600000;
+      html += '<div class="tv-row' + (soon ? ' soon' : '') + '"><div class="tv-name">' + esc(s.label) + '</div><div class="tv-when">' + esc(when) + '</div></div>';
+    }
+    el.innerHTML = html;
+  }
+
   // ---------- reminders (banner) ----------
 
   function lastDayOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
@@ -595,7 +620,8 @@
   function renderForecast() {
     var html = '';
     var days = D.weather.daily;
-    for (var i = 0; i < days.length && i < 10; i++) {
+    var n = (C.forecast && C.forecast.days) || 10;
+    for (var i = 0; i < days.length && i < n; i++) {
       var d = days[i];
       // Live data sends local dates as YYYY-MM-DD; mock data sends epoch ms.
       var dd = typeof d.date === 'string' ?
@@ -605,6 +631,7 @@
         '<div class="fd-icon">' + wxIcon(d.cond, 34) + '</div>' +
         '<div class="fd-hi">' + d.hi + '°</div><div class="fd-lo">' + d.lo + '°</div></div>';
     }
+    $('forecast').className = 'fc' + (n <= 5 ? ' fc-big' : '');
     $('forecast').innerHTML = html;
   }
 
@@ -930,6 +957,10 @@
         D.muni = null; // live site without a 511 key: hide the card rather than show sample times
         renderMuni(now());
       }
+      if (data.tv) {
+        D.tv = data.tv;
+        renderTv(now());
+      }
       if (data.rivers) {
         D.rivers = data.rivers;
         renderRivers();
@@ -976,6 +1007,7 @@
   function renderAll(n) {
     renderBanner(n);
     renderMuni(n);
+    renderTv(n);
     renderSurf(n);
     renderRivers();
     renderEvents(n);

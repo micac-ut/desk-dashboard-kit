@@ -5,6 +5,7 @@ All notable changes to this project are recorded here. Format: [Keep a Changelog
 ## [Unreleased]
 
 ### Added
+- Muni N Judah status and next arrivals (Church & Duboce, Church Station east) via 511.org (`netlify/lib/muni.mjs`).
 - Surf card (Jacks, Ocean Beach, Pacifica): Open-Meteo marine + wind and NOAA tides, with a simple poor/fair/good rating (`netlify/lib/surf.mjs`).
 - Rivers card (South Fork American at Chili Bar, Lower American): parsed from Dreamflows with a USGS fallback and a trend arrow (`netlify/lib/rivers.mjs`).
 - `features` switches in `site/js/config.js`; calendar and commute are off (hidden, not removed).

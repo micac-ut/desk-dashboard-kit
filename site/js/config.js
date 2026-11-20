@@ -9,7 +9,7 @@ window.DASH_CONFIG = {
   timeZone: 'America/Los_Angeles',
 
   // Turn whole sections on or off. The calendar and commute code stays in place, just hidden.
-  features: { muni: true, calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
+  features: { muni: true, tv: true, calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
 
   // Recurring reminders shown as a banner under the clock, on the due day only (set daysBefore: 1 to
   // also get a heads-up the day before). dayOfMonth is clamped to the month's last day. Tap the banner on the day to mark it done; it
@@ -17,6 +17,9 @@ window.DASH_CONFIG = {
   reminders: [
     { id: 'heartworm', label: 'Heartworm meds', dayOfMonth: 8, daysBefore: 0 }
   ],
+
+  // How many forecast days to show (the server still fetches 10; this only trims the strip).
+  forecast: { days: 3 },
 
   // Surf and river cards (data comes from /api/data; spots and gauges are set in netlify/lib/surf.mjs and rivers.mjs).
   surf: { goodColor: '#8fd8a8', fairColor: '#f2b36b', poorColor: '#9a9a96', bigColor: '#f28b82' },

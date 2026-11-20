@@ -5,6 +5,7 @@ import { refreshWeather } from '../lib/weather.mjs';
 import { refreshSurf } from '../lib/surf.mjs';
 import { refreshRivers } from '../lib/rivers.mjs';
 import { getMuni } from '../lib/muni.mjs';
+import { refreshTv } from '../lib/tv.mjs';
 
 export default async () => {
   try {
@@ -21,6 +22,11 @@ export default async () => {
     await getMuni(); // respects the cache, so it stays inside 511's request limit
   } catch (err) {
     console.error('Muni refresh failed', err);
+  }
+  try {
+    await refreshTv();
+  } catch (err) {
+    console.error('TV refresh failed', err);
   }
   try {
     await refreshRivers();

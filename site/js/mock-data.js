@@ -110,6 +110,14 @@ window.buildMockData = function (base) {
       ]
     },
 
+    tv: {
+      fetchedAt: base.getTime(),
+      shows: [
+        { id: 114, label: 'Survivor', ended: false, next: { season: 51, number: 10, airstamp: new Date(base.getTime() + 3 * 86400000).toISOString(), tba: false } },
+        { id: 58177, label: 'The Traitors', ended: false, next: { season: 6, number: 1, airstamp: new Date(base.getTime() + 40 * 86400000).toISOString(), tba: true } }
+      ]
+    },
+
     rivers: {
       fetchedAt: base.getTime(),
       rivers: [

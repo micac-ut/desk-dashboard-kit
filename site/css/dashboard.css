@@ -347,6 +347,15 @@ html, body {
 .fd-hi { font-size: 23px; }
 .fd-lo { font-size: 19px; color: #9a9a96; margin-top: 2px; }
 
+/* A handful of days (forecast.days in config.js): fewer, bigger columns instead of spread-out small ones. */
+.fc-big { justify-content: space-evenly; }
+.fc-big .fd { flex: 0 1 160px; }
+.fc-big .fd-day { font-size: 24px; }
+.fc-big .fd-icon { height: 56px; margin-top: 6px; }
+.fc-big .fd-icon svg { width: 56px; height: 56px; }
+.fc-big .fd-hi { font-size: 36px; margin-top: 4px; }
+.fc-big .fd-lo { font-size: 26px; margin-top: 4px; }
+
 /* ---------- 5. Lower: events | commute + tasks ---------- */
 
 .lower { flex: 1 1 auto; min-height: 0; display: flex; }
@@ -638,24 +647,31 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 .night-date  { font-size: 36px; color: #2a2a28; margin-top: 22px; }
 
 
-/* ---------- Surf and rivers ---------- */
+/* ---------- Surf, rivers, TV ---------- */
 
-.card-surf { flex: 1; min-width: 0; margin-right: 16px; display: flex; flex-direction: column; }
-.card-rivers { width: 250px; display: flex; flex-direction: column; }
-.surf-row { display: flex; align-items: center; flex: 1; border-top: 1px solid #26262a; }
-.surf-name { width: 150px; white-space: nowrap; }
-.surf-spot { font-size: 23px; }
-.surf-area { font-size: 16px; color: #9a9a96; }
-.surf-size { width: 80px; font-size: 20px; color: #9a9a96; }
-.surf-size b { font-size: 34px; font-weight: normal; color: #ececea; }
-.surf-sub { font-size: 16px; color: #9a9a96; margin-top: 2px; white-space: nowrap; }
-.surf-mid { flex: 1; min-width: 0; font-size: 18px; white-space: nowrap; overflow: hidden; }
-.surf-rating { font-size: 18px; text-transform: uppercase; border: 2px solid; border-radius: 14px; padding: 2px 8px; margin-left: 8px; font-size: 16px; }
-.river-row { flex: 1; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid #26262a; }
-.river-name { font-size: 22px; }
-.river-flow { font-size: 32px; margin-top: 2px; }
-.river-unit { font-size: 18px; color: #9a9a96; }
-.muted-note { font-size: 18px; color: #6c6c69; margin-top: 8px; }
+.card-surf { flex: 1; min-width: 0; margin-right: 16px; display: flex; flex-direction: column; padding: 10px 16px; }
+.conditions-side { width: 250px; display: flex; flex-direction: column; }
+.card-rivers { display: flex; flex-direction: column; margin-bottom: 16px; padding: 10px 16px; }
+.card-tv { display: flex; flex-direction: column; padding: 10px 16px; }
+.surf-row { display: flex; align-items: center; flex: 1; border-top: 1px solid #26262a; padding: 4px 0; }
+.surf-name { width: 140px; white-space: nowrap; }
+.surf-spot { font-size: 20px; }
+.surf-area { font-size: 14px; color: #9a9a96; }
+.surf-size { width: 72px; font-size: 17px; color: #9a9a96; }
+.surf-size b { font-size: 27px; font-weight: normal; color: #ececea; }
+.surf-sub { font-size: 14px; color: #9a9a96; margin-top: 1px; white-space: nowrap; }
+.surf-mid { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; }
+.surf-rating { font-size: 14px; text-transform: uppercase; border: 2px solid; border-radius: 12px; padding: 1px 7px; margin-left: 6px; }
+.river-row { flex: 1; display: flex; flex-direction: column; justify-content: center; border-top: 1px solid #26262a; padding: 3px 0; }
+.river-name { font-size: 19px; }
+.river-flow { font-size: 26px; margin-top: 1px; }
+.river-unit { font-size: 15px; color: #9a9a96; }
+.muted-note { font-size: 16px; color: #6c6c69; margin-top: 6px; }
+
+.tv-row { display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #26262a; padding: 6px 0; }
+.tv-name { font-size: 19px; }
+.tv-when { font-size: 17px; color: #9a9a96; }
+.tv-row.soon .tv-when { color: #8fd8a8; }
 
 /* Surf pins on the map (anchor at the beach; label sits to the left, over the ocean). */
 .map-marker.surf { width: 0; height: 0; }
