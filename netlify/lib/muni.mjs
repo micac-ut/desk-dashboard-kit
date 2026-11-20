@@ -1,21 +1,26 @@
 // Muni (SF) via the 511.org Open Data API: service alerts for the N Judah, and next arrivals at the
 // stops we care about. Needs a free key in the DASH_511 env var (DASH_511_KEY also works).
-// 511 allows 60 requests/hour per key, so arrivals are cached 4 minutes and stop lookup 30 days.
+// 511 allows 60 requests/hour per key. Budget: ~4 stop requests every 6 minutes (only stops that
+// serve our lines, found by an occasional full scan) + 1 alerts request every 15 minutes.
 import { store } from './common.mjs';
 
 const CACHE_KEY = 'muni/now';
 const STOPS_KEY = 'muni/stops';
-const MAX_AGE = 4 * 60 * 1000;
-const STOPS_MAX_AGE = 30 * 24 * 3600e3;
+const USEFUL_KEY = 'muni/useful';
+const MAX_AGE = 6 * 60 * 1000;           // arrivals
+const ALERTS_AGE = 15 * 60 * 1000;       // service alerts change slowly
+const STOPS_MAX_AGE = 30 * 24 * 3600e3;  // stop locations
+const USEFUL_AGE = 6 * 3600e3;           // which nearby stops actually serve our lines
+const USEFUL_EMPTY_AGE = 30 * 60 * 1000; // re-scan sooner if a place had nothing running
 const BASE = 'https://api.511.org/transit';
 
 // Public intersection coordinates. Stops are found by distance, so no stop codes live in the repo.
-//   lines: only these lines (null = every line)   dir: 'IB' inbound (toward downtown, i.e. east),
+//   lines: only these lines (null = every line; Church Station is limited to the Metro lines, not the F or buses)   dir: 'IB' inbound (toward downtown, i.e. east),
 //   'OB' outbound, or null for both
 export const ALERT_LINE = 'N';
 export const PLACES = [
   { id: 'duboce', name: 'Church & Duboce', lat: 37.7692, lon: -122.4291, radiusM: 90, lines: ['N'], dir: null },
-  { id: 'church', name: 'Church Station', lat: 37.7673, lon: -122.4290, radiusM: 90, lines: null, dir: 'IB' }
+  { id: 'church', name: 'Church Station', lat: 37.7673, lon: -122.4290, radiusM: 90, lines: ['J', 'K', 'L', 'M', 'N', 'T'], dir: 'IB' }
 ];
 
 const key = () => process.env.DASH_511_KEY || process.env.DASH_511 || '';
@@ -107,28 +112,49 @@ export function parseAlerts(d, line) {
 
 export async function refreshMuni() {
   if (!key()) return null;
+  const st = store();
   const picks = await stopsFor(PLACES);
-  const places = [], errors = [];
-  const [alertsRes, ...visitRes] = await Promise.allSettled([
-    get('/servicealerts', { agency: 'SF' }),
-    ...PLACES.flatMap((p) => picks[p.id].map((s) => get('/StopMonitoring', { agency: 'SF', stopCode: s.code })))
-  ]);
-  let i = 0;
+  const useful = await st.get(USEFUL_KEY, { type: 'json' });
+  const scan = !(useful && Date.now() - useful.at < (useful.empty ? USEFUL_EMPTY_AGE : USEFUL_AGE));
+
+  // Which stop codes to ask about: everything nearby on a full scan, otherwise only the useful ones.
+  const codesFor = (p) => (scan ? picks[p.id].map((s) => s.code) : (useful.codes[p.id] || []));
+  const wanted = [...new Set(PLACES.flatMap(codesFor))];
+  const errors = [];
+  const visitsByCode = {};
+  await Promise.all(wanted.map(async (code) => {
+    try { visitsByCode[code] = parseVisits(await get('/StopMonitoring', { agency: 'SF', stopCode: code })); }
+    catch (err) { errors.push(String(err && err.message)); }
+  }));
+
+  const places = [], usefulCodes = {};
+  let anyEmpty = false;
   for (const p of PLACES) {
     let all = [];
-    for (const s of picks[p.id]) {
-      const r = visitRes[i++];
-      if (r.status === 'fulfilled') all = all.concat(parseVisits(r.value));
-      else errors.push(String(r.reason && r.reason.message));
+    usefulCodes[p.id] = [];
+    for (const code of codesFor(p)) {
+      const v = visitsByCode[code];
+      if (!v) continue;
+      all = all.concat(v);
+      if (filterArrivals(v, p).length) usefulCodes[p.id].push(code);
     }
-    places.push({ id: p.id, name: p.name, stops: picks[p.id].length, arrivals: filterArrivals(all, p).slice(0, 6) });
+    if (!usefulCodes[p.id].length) anyEmpty = true;
+    places.push({ id: p.id, name: p.name, stops: codesFor(p).length, arrivals: filterArrivals(all, p).slice(0, 6) });
   }
-  let alerts = null;
-  if (alertsRes.status === 'fulfilled') alerts = parseAlerts(alertsRes.value, ALERT_LINE);
-  else errors.push(String(alertsRes.reason && alertsRes.reason.message));
-  if (!places.some((p) => p.stops) && errors.length) throw new Error(errors[0]);
-  const data = { line: ALERT_LINE, alerts, places, errors, fetchedAt: Date.now() };
-  await store().setJSON(CACHE_KEY, data);
+  if (scan && !errors.length) await st.setJSON(USEFUL_KEY, { at: Date.now(), codes: usefulCodes, empty: anyEmpty });
+  if (!wanted.some((c) => visitsByCode[c]) && errors.length) throw new Error(errors[0]);
+
+  // Alerts: reuse the last fetch if it is recent.
+  const prev = await st.get(CACHE_KEY, { type: 'json' });
+  let alerts = prev ? prev.alerts : null, alertsAt = prev ? prev.alertsAt || 0 : 0;
+  if (!prev || alerts == null || Date.now() - alertsAt > ALERTS_AGE) {
+    try {
+      alerts = parseAlerts(await get('/servicealerts', { agency: 'SF' }), ALERT_LINE);
+      alertsAt = Date.now();
+    } catch (err) { errors.push(String(err && err.message)); }
+  }
+  const data = { line: ALERT_LINE, alerts, alertsAt, places, errors, fetchedAt: Date.now() };
+  await st.setJSON(CACHE_KEY, data);
   return data;
 }
 
