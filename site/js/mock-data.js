@@ -121,8 +121,8 @@ window.buildMockData = function (base) {
     snow: {
       fetchedAt: base.getTime(),
       resorts: [
-        { id: 'palisades', name: 'Palisades Tahoe', elevationFt: 6211, tempF: 19, nowSnowing: false, last24hIn: 0.8, next3dayIn: 0.6 },
-        { id: 'kirkwood', name: 'Kirkwood', elevationFt: 7795, tempF: 16, nowSnowing: true, last24hIn: 0.4, next3dayIn: 1.7 }
+        { id: 'palisades', name: 'Palisades Tahoe', elevationFt: 6211, tempF: 19, nowSnowing: false, last24hIn: 0.8, next24hIn: 1.2, next3dayIn: 0.6 },
+        { id: 'kirkwood', name: 'Kirkwood', elevationFt: 7795, tempF: 16, nowSnowing: true, last24hIn: 0.4, next24hIn: 0.5, next3dayIn: 1.7 }
       ]
     },
 

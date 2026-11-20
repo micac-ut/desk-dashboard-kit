@@ -37,6 +37,7 @@ async function oneResort(r) {
   // past_days gives yesterday + today-so-far; "last 24h" = yesterday's total + today's so far.
   const todayIdx = d.daily.time.indexOf(new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()));
   const last24 = todayIdx >= 0 ? d.daily.snowfall_sum[todayIdx] : null;
+  const next24 = todayIdx >= 0 ? d.daily.snowfall_sum[todayIdx + 1] : null;
   const next3 = todayIdx >= 0 ? d.daily.snowfall_sum.slice(todayIdx + 1, todayIdx + 4).reduce((a, b) => a + (b || 0), 0) : null;
 
   return {
@@ -45,6 +46,7 @@ async function oneResort(r) {
     tempF: Math.round(d.current.temperature_2m),
     nowSnowing: (d.current.snowfall || 0) > 0,
     last24hIn: in1(last24),
+    next24hIn: in1(next24),
     next3dayIn: in1(next3),
     daily: d.daily.time.slice(todayIdx).map((date, i) => ({
       date, snowIn: in1(d.daily.snowfall_sum[todayIdx + i]),

@@ -243,10 +243,14 @@
     if (!resorts.length) { html += '<div class="muted-note">No snow data</div>'; }
     for (var i = 0; i < resorts.length; i++) {
       var r = resorts[i];
-      var fresh = r.last24hIn > 0;
-      var sub = r.tempF + '°' + (r.nowSnowing ? ' · snowing now' : r.next3dayIn > 0 ? ' · ' + r.next3dayIn + '" next 3d' : '');
-      html += '<div class="snow-row"><div class="snow-name">' + esc(r.name) + '<div class="surf-sub">' + sub + '</div></div>' +
-        '<div class="snow-amt' + (fresh ? ' fresh' : '') + '">' + (r.last24hIn == null ? '--' : r.last24hIn) + '<span class="snow-unit">" 24h</span></div></div>';
+      var fresh = r.last24hIn > 0, coming = r.next24hIn > 0;
+      var sub = r.tempF + '°' + (r.nowSnowing ? ' · snowing now' : '');
+      html += '<div class="snow-row">' +
+        '<div class="snow-name">' + esc(r.name) + '<div class="surf-sub">' + sub + '</div></div>' +
+        '<div class="snow-vals">' +
+          '<div class="snow-val' + (fresh ? ' fresh' : '') + '"><b>' + (r.last24hIn == null ? '--' : r.last24hIn) + '"</b><span>Last 24h</span></div>' +
+          '<div class="snow-val' + (coming ? ' coming' : '') + '"><b>' + (r.next24hIn == null ? '--' : r.next24hIn) + '"</b><span>Next 24h</span></div>' +
+        '</div></div>';
     }
     el.innerHTML = html;
   }
