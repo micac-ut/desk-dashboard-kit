@@ -671,3 +671,14 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 /* Dog events: golden tag and paw. */
 .chip-dog { border-color: #E3A94A; color: #E3A94A; }
 .ev.dog .ev-title { color: #E3A94A; }
+
+/* Reminder banner (e.g. heartworm day). */
+.banner { padding: 0; }
+.banner-row {
+  display: flex; align-items: center;
+  background: #2a2112; border: 2px solid #E3A94A; border-radius: 14px;
+  padding: 12px 18px; margin-bottom: 8px; color: #E3A94A;
+}
+.banner-row.soon { background: #161614; border-color: #4a3f26; }
+.banner-text { font-size: 28px; flex: 1; }
+.banner-tag { font-size: 17px; text-transform: uppercase; letter-spacing: 1px; }

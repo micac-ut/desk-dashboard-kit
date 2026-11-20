@@ -22,7 +22,8 @@
     snoozedUntil: {},   // takeover id -> ms
     stayOnUntil: 0,     // night mode snoozed until
     nightNow: false,    // "Night mode now" tapped, or prompt timed out
-    wakeAt: 0           // tapped the night screen
+    wakeAt: 0,          // tapped the night screen
+    remDone: {}         // reminder id + day -> true, once tapped as done
   };
   var overlaySig = null;
 
@@ -156,6 +157,44 @@
     return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24">' +
       '<g transform="rotate(' + rot + ' 12 12)" stroke="' + color + '" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M12 20V4M6 10l6-6 6 6"/></g></svg>';
+  }
+
+  // ---------- reminders (banner) ----------
+
+  function lastDayOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  function dueOn(r, d) { return d.getDate() === Math.min(r.dayOfMonth, lastDayOfMonth(d.getFullYear(), d.getMonth())); }
+
+  // 'today', 'tomorrow' (heads-up), or null.
+  function reminderState(r, n) {
+    if (dueOn(r, n)) { return 'today'; }
+    var t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+    return (r.daysBefore || 0) >= 1 && dueOn(r, t) ? 'tomorrow' : null;
+  }
+
+  function renderBanner(n) {
+    var el = $('banner'), list = C.reminders || [], html = '';
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i], st = reminderState(r, n);
+      if (!st || (st === 'today' && S.remDone[r.id + ':' + dayKey(n)])) { continue; }
+      html += '<div class="banner-row' + (st === 'tomorrow' ? ' soon' : '') + '" data-id="' + esc(r.id) + '">' + pawIcon(30) +
+        '<span class="banner-text">' + esc(r.label) + '</span>' +
+        '<span class="banner-tag">' + (st === 'today' ? 'Today &middot; tap when done' : 'Tomorrow') + '</span></div>';
+    }
+    el.className = html ? 'banner' : 'banner hidden';
+    el.innerHTML = html;
+  }
+
+  function onBannerClick(ev) {
+    var t = ev.target;
+    while (t && t !== $('banner')) {
+      if (t.getAttribute && t.getAttribute('data-id') && !/soon/.test(t.className)) {
+        S.remDone[t.getAttribute('data-id') + ':' + dayKey(now())] = true;
+        save();
+        renderBanner(now());
+        return;
+      }
+      t = t.parentNode;
+    }
   }
 
   // ---------- surf and rivers ----------
@@ -877,6 +916,7 @@
   }
 
   function renderAll(n) {
+    renderBanner(n);
     renderSurf(n);
     renderRivers();
     renderEvents(n);
@@ -897,6 +937,7 @@
       renderEvents(n);
       renderCommute(n);
       renderSurf(n); // next-tide text moves forward
+      renderBanner(n);
       if (minute % 5 === 0) { updateSky(); } // the sun moves; repaint the sky every 5 minutes
     }
     renderOverlay(n);
@@ -921,6 +962,13 @@
       offset = at(real, t).getTime() - real.getTime();
       persist = false; // previews shouldn't leave state behind
     }
+    // ?day=8 previews that day of this month (with ?time=..., mock only).
+    var dd = query('day');
+    if (dd) {
+      var b0 = now();
+      offset += new Date(b0.getFullYear(), b0.getMonth(), +dd, b0.getHours(), b0.getMinutes()).getTime() - b0.getTime();
+      persist = false;
+    }
     load();
     if (C.features.calendar) {
       $('legacy').className = 'lower';
@@ -940,6 +988,7 @@
     window.addEventListener('resize', fit);
     $('overlay').addEventListener('click', onOverlayClick);
     $('strava').addEventListener('click', onStravaClick);
+    $('banner').addEventListener('click', onBannerClick);
     watchScroll('events');
     watchScroll('tasks');
 
