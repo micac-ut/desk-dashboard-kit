@@ -8,11 +8,12 @@ import { getSurf } from '../lib/surf.mjs';
 import { getRivers } from '../lib/rivers.mjs';
 import { getMuni } from '../lib/muni.mjs';
 import { getTv } from '../lib/tv.mjs';
+import { getSnow } from '../lib/snow.mjs';
 
 export default async (req) => {
   if (!hasKey(req)) return json({ error: 'unauthorized' }, 401);
 
-  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, surf: null, rivers: null, muni: null, tv: null, status: {} };
+  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, surf: null, rivers: null, muni: null, tv: null, snow: null, status: {} };
 
   try {
     out.weather = await getWeather();
@@ -44,6 +45,14 @@ export default async (req) => {
   } catch (err) {
     console.error(err);
     out.status.tv = 'error';
+  }
+
+  try {
+    out.snow = await getSnow();
+    out.status.snow = out.snow ? (out.snow.stale ? 'stale' : 'ok') : 'error';
+  } catch (err) {
+    console.error(err);
+    out.status.snow = 'error';
   }
 
   try {

@@ -1,20 +1,21 @@
 /*
  * Interactive weather map: CARTO dark base (OSM data), NEXRAD radar tiles,
- * surf-spot pins, optional work/home markers, and optional Windy-style wind streaks (off by default).
+ * an animated NEXRAD radar loop, optional surf-spot pins and work/home markers, and optional wind streaks (off by default).
  * Pan and pinch-zoom freely; the map snaps back to the home view when idle.
  * ES5 only. Needs Leaflet 1.9 (window.L).
  */
 window.DashMap = (function () {
   'use strict';
 
-  var C, map, radar, homeBounds;
+  var C, map, homeBounds;
+  var radarFrames = [], radarIdx = 0, radarAnimTimer = null;
   var expanded = false, idleTimer = null, radarTimer = null;
   var card, canvas, ctx;
   var wind = null, field = null, fieldCols = 0, fieldRows = 0, FIELD_STEP = 16;
   var windKey = '', windAt = 0, windReq = null, moveTimer = null;
   var particles = [], paused = false, moving = false, running = false, lastFrame = 0, stepScale = 1;
   var hooks = {};
-  var windOn = true, surfLayer = null, surfSpots = null, surfMarkers = [];
+  var windOn = true, showSurf = false, surfLayer = null, surfSpots = null, surfMarkers = [];
 
   // Drawn icons: the frame's Android 6 font has no glyph for the expand/close symbols.
   var ICON_EXPAND = '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" ' +
@@ -38,6 +39,7 @@ window.DashMap = (function () {
   function init(opts) {
     C = window.DASH_CONFIG.map;
     windOn = C.wind.enabled !== false;
+    showSurf = C.showSurfPins === true;
     hooks = opts || {};
     if (!window.L) { if (hooks.onError) { hooks.onError('Map library failed to load'); } return; }
     card = document.getElementById('radar-card');
@@ -52,7 +54,7 @@ window.DashMap = (function () {
     map.attributionControl.setPrefix(false);
 
     L.tileLayer(C.base, { className: 'dark-tiles', maxZoom: 19, attribution: C.baseAttribution }).addTo(map);
-    radar = L.tileLayer(radarUrl(), { opacity: C.radar.opacity, attribution: C.radar.attribution }).addTo(map);
+    buildRadarFrames();
 
     var w = C.locations.work, h = C.locations.home;
     homeBounds = L.latLngBounds([[w.lat, w.lon], [h.lat, h.lon]]);
@@ -62,8 +64,7 @@ window.DashMap = (function () {
       marker(w, 'work');
       marker(h, 'home');
     }
-    surfLayer = L.layerGroup().addTo(map);
-    drawSurf(); // pins that arrived before the map was ready
+    if (showSurf) { surfLayer = L.layerGroup().addTo(map); drawSurf(); } // pins that arrived before the map was ready
     goHome();
 
     if (windOn) { setupCanvas(); }
@@ -112,7 +113,7 @@ window.DashMap = (function () {
   }
 
   function drawSurf() {
-    if (!map || !surfLayer) { return; }
+    if (!showSurf || !map || !surfLayer) { return; }
     surfLayer.clearLayers();
     surfMarkers = [];
     if (!surfSpots || !surfSpots.length) { return; }
@@ -155,6 +156,7 @@ window.DashMap = (function () {
 
   // Called by the page whenever new surf data arrives (before or after the map is ready).
   function setSurf(spots) {
+    if (!showSurf) { return; }
     surfSpots = spots;
     drawSurf();
     if (map && !expanded) { goHome(); }
@@ -198,18 +200,58 @@ window.DashMap = (function () {
     if (!on) { goHome(); }
   }
 
-  // ---------- radar ----------
+  // ---------- radar (animated loop: IEM serves "N minutes old" layers of the same composite) ----------
 
-  function radarUrl() {
-    // Bucket to the refresh interval so tiles are cached between refreshes.
-    var bucket = Math.floor(new Date().getTime() / (C.radar.refreshMin * 60000));
-    return C.radar.url + '?_=' + bucket;
+  // Oldest first, so the loop plays forward in time (building/moving), like a weather app.
+  var RADAR_AGES_MIN = [50, 40, 30, 20, 10, 0];
+  var RADAR_FRAME_MS = 700;   // time each frame is shown
+  var RADAR_HOLD_MS = 1600;   // extra time the newest (most relevant) frame stays up before looping
+
+  function ageUrl(ageMin) {
+    // Bucket to 5 minutes (IEM's own granularity) so tiles are cached between refreshes.
+    var bucket = Math.floor(new Date().getTime() / 300000);
+    var layer = ageMin === 0 ? C.radar.baseLayer : C.radar.baseLayer + '-m' + (ageMin < 10 ? '0' : '') + ageMin + 'm';
+    return C.radar.urlTemplate.replace('{layer}', layer) + '?_=' + bucket;
   }
-  function refreshRadar() { radar.setUrl(radarUrl()); stamp(); }
+
+  function buildRadarFrames() {
+    for (var i = 0; i < radarFrames.length; i++) { map.removeLayer(radarFrames[i]); }
+    radarFrames = [];
+    for (var j = 0; j < RADAR_AGES_MIN.length; j++) {
+      radarFrames.push(L.tileLayer(ageUrl(RADAR_AGES_MIN[j]), {
+        opacity: 0, attribution: j === 0 ? C.radar.attribution : ''
+      }).addTo(map));
+    }
+    radarIdx = 0;
+    radarFrames[radarFrames.length - 1].setOpacity(C.radar.opacity); // show the newest while others load
+    stamp();
+    if (!C.radar.animate) { return; }
+    if (radarAnimTimer) { window.clearTimeout(radarAnimTimer); }
+    radarAnimTimer = window.setTimeout(stepRadar, RADAR_FRAME_MS);
+  }
+
+  function stepRadar() {
+    radarFrames[radarIdx].setOpacity(0);
+    radarIdx = (radarIdx + 1) % radarFrames.length;
+    radarFrames[radarIdx].setOpacity(C.radar.opacity);
+    if (radarIdx === radarFrames.length - 1) { stamp(); }
+    var wait = radarIdx === radarFrames.length - 1 ? RADAR_HOLD_MS : RADAR_FRAME_MS;
+    radarAnimTimer = window.setTimeout(stepRadar, wait);
+  }
+
+  function refreshRadar() { buildRadarFrames(); }
+
   function stamp() {
-    var d = new Date(), step = C.radar.refreshMin;
-    d.setMinutes(Math.floor(d.getMinutes() / step) * step, 0, 0);
+    var d = new Date(), ageMin = RADAR_AGES_MIN[radarIdx];
+    d = new Date(d.getTime() - ageMin * 60000);
+    d.setMinutes(Math.floor(d.getMinutes() / 5) * 5, 0, 0);
     if (hooks.onRadarTime) { hooks.onRadarTime(d); }
+  }
+
+  function setRadarPaused(p) {
+    if (!C.radar.animate) { return; }
+    if (p && radarAnimTimer) { window.clearTimeout(radarAnimTimer); radarAnimTimer = null; }
+    else if (!p && !radarAnimTimer) { radarAnimTimer = window.setTimeout(stepRadar, RADAR_FRAME_MS); }
   }
 
   // ---------- wind data ----------
@@ -429,6 +471,7 @@ window.DashMap = (function () {
 
   // Stop animating while a takeover or night mode covers the map.
   function setPaused(p) {
+    setRadarPaused(p);
     if (!windOn || p === paused) { return; }
     paused = p;
     if (p) { clearCanvas(); } else if (C.wind.animate) { start(); } else { drawStatic(); }

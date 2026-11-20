@@ -9,7 +9,7 @@ window.DASH_CONFIG = {
   timeZone: 'America/Los_Angeles',
 
   // Turn whole sections on or off. The calendar and commute code stays in place, just hidden.
-  features: { muni: true, tv: true, calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
+  features: { muni: true, tv: true, snow: true, calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
 
   // Recurring reminders shown as a banner under the clock, on the due day only (set daysBefore: 1 to
   // also get a heads-up the day before). dayOfMonth is clamped to the month's last day. Tap the banner on the day to mark it done; it
@@ -19,7 +19,7 @@ window.DASH_CONFIG = {
   ],
 
   // How many forecast days to show (the server still fetches 10; this only trims the strip).
-  forecast: { days: 3 },
+  forecast: { days: 7 },
 
   // Surf and river cards (data comes from /api/data; spots and gauges are set in netlify/lib/surf.mjs and rivers.mjs).
   surf: { goodColor: '#8fd8a8', fairColor: '#f2b36b', poorColor: '#9a9a96', bigColor: '#f28b82' },
@@ -67,8 +67,10 @@ window.DASH_CONFIG = {
       work: { name: 'Work', lat: 37.79, lon: -122.40 },
       home: { name: 'Home', lat: 37.76, lon: -122.44 }
     },
-    // Show the work/home markers and the dashed line between them. Off: the map frames the surf spots instead.
+    // Show the work/home markers and the dashed line between them, and the surf-spot pins.
+    // Both off: the map just frames your work/home point, radar front and center (Surf has its own card below).
     showWorkHome: false,
+    showSurfPins: false,
     minZoom: 5,
     maxZoom: 13,
     idleReturnSec: 60,         // snap back to the home view after this long untouched
@@ -80,10 +82,14 @@ window.DASH_CONFIG = {
     baseAttribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 
     // NWS NEXRAD composite, served as map tiles by the Iowa Environmental Mesonet. US only, no key.
+    // IEM also serves the same composite "N minutes old" (nexrad-n0q-900913-m10m, -m20m, ... up to 50),
+    // which js/map.js steps through as a 6-frame loop to show storms moving, instead of one static frame.
     radar: {
-      url: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png',
+      urlTemplate: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/{layer}/{z}/{x}/{y}.png',
+      baseLayer: 'nexrad-n0q-900913',
       opacity: 0.65,
       refreshMin: 5,
+      animate: true,          // false: show only the latest frame, no looping (?radar=static also works)
       attribution: 'Radar: NWS via <a href="https://mesonet.agron.iastate.edu/">IEM</a>'
     },
 

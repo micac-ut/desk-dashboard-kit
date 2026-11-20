@@ -235,6 +235,22 @@
     el.innerHTML = html;
   }
 
+  function renderSnow(n) {
+    var el = $('snow');
+    if (C.features.snow === false || !D.snow) { el.className = 'hidden'; return; }
+    var html = '<div class="card-title">Snow</div>';
+    var resorts = D.snow.resorts || [];
+    if (!resorts.length) { html += '<div class="muted-note">No snow data</div>'; }
+    for (var i = 0; i < resorts.length; i++) {
+      var r = resorts[i];
+      var fresh = r.last24hIn > 0;
+      var sub = r.tempF + '°' + (r.nowSnowing ? ' · snowing now' : r.next3dayIn > 0 ? ' · ' + r.next3dayIn + '" next 3d' : '');
+      html += '<div class="snow-row"><div class="snow-name">' + esc(r.name) + '<div class="surf-sub">' + sub + '</div></div>' +
+        '<div class="snow-amt' + (fresh ? ' fresh' : '') + '">' + (r.last24hIn == null ? '--' : r.last24hIn) + '<span class="snow-unit">" 24h</span></div></div>';
+    }
+    el.innerHTML = html;
+  }
+
   // ---------- reminders (banner) ----------
 
   function lastDayOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
@@ -588,6 +604,7 @@
 
   function startMap() {
     if (query('wind') === 'static') { C.map.wind.animate = false; }
+    if (query('radar') === 'static') { C.map.radar.animate = false; }
     window.DashMap.init({
       onRadarTime: function (d) { $('radar-stamp').innerHTML = 'Radar · ' + hm(d); },
       // Live wind at the map center replaces the mock value in the pill.
@@ -631,7 +648,7 @@
         '<div class="fd-icon">' + wxIcon(d.cond, 34) + '</div>' +
         '<div class="fd-hi">' + d.hi + '°</div><div class="fd-lo">' + d.lo + '°</div></div>';
     }
-    $('forecast').className = 'fc' + (n <= 5 ? ' fc-big' : '');
+    $('forecast').className = 'fc' + (n <= 4 ? ' fc-big' : n <= 8 ? ' fc-med' : '');
     $('forecast').innerHTML = html;
   }
 
@@ -961,6 +978,10 @@
         D.tv = data.tv;
         renderTv(now());
       }
+      if (data.snow) {
+        D.snow = data.snow;
+        renderSnow(now());
+      }
       if (data.rivers) {
         D.rivers = data.rivers;
         renderRivers();
@@ -1008,6 +1029,7 @@
     renderBanner(n);
     renderMuni(n);
     renderTv(n);
+    renderSnow(n);
     renderSurf(n);
     renderRivers();
     renderEvents(n);

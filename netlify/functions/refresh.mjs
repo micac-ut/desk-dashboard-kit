@@ -6,6 +6,7 @@ import { refreshSurf } from '../lib/surf.mjs';
 import { refreshRivers } from '../lib/rivers.mjs';
 import { getMuni } from '../lib/muni.mjs';
 import { refreshTv } from '../lib/tv.mjs';
+import { refreshSnow } from '../lib/snow.mjs';
 
 export default async () => {
   try {
@@ -27,6 +28,11 @@ export default async () => {
     await refreshTv();
   } catch (err) {
     console.error('TV refresh failed', err);
+  }
+  try {
+    await refreshSnow();
+  } catch (err) {
+    console.error('Snow refresh failed', err);
   }
   try {
     await refreshRivers();
