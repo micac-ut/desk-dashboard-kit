@@ -162,7 +162,7 @@
 
   function ratingColor(r) {
     var s = C.surf;
-    return r === 'good' ? s.goodColor : (r === 'fair' ? s.fairColor : s.poorColor);
+    return r === 'good' ? s.goodColor : (r === 'fair' ? s.fairColor : (r === 'big' ? s.bigColor : s.poorColor));
   }
   function angDiff(a, b) { var d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; }
   function compass16(deg) {
@@ -214,6 +214,7 @@
     }
     if (D.surfStale) { html += '<div class="muted-note">Showing older data</div>'; }
     el.innerHTML = html;
+    if (window.DashMap && window.DashMap.setSurf) { window.DashMap.setSurf(s.spots); }
   }
 
   function renderRivers() {

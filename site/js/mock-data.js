@@ -78,15 +78,15 @@ window.buildMockData = function (base) {
     surf: {
       fetchedAt: base.getTime(),
       spots: [
-        { id: 'jacks', name: 'Jacks', area: 'Santa Cruz', rating: 'fair', offshoreDeg: 355,
-          swell: { hsFt: 5.4, periodS: 12, dirDeg: 285, swellFt: 4.8, swellPeriodS: 12, swellDirDeg: 285, next: [5.8, 6.2] },
+        { id: 'jacks', name: 'Jacks', area: 'Santa Cruz', lat: 36.95, lon: -121.97, rating: 'big', offshoreDeg: 355,
+          swell: { hsFt: 10.2, periodS: 12, dirDeg: 285, swellFt: 4.8, swellPeriodS: 12, swellDirDeg: 285, next: [5.8, 6.2] },
           wind: { mph: 5, gustMph: 9, fromDeg: 350 },
           tides: [tide(5, 51, 4.3, true), tide(11, 46, 2.4, false), tide(16, 56, 3.6, true), tide(23, 17, 1.0, false)] },
-        { id: 'ob', name: 'Ocean Beach', area: 'San Francisco', rating: 'good', offshoreDeg: 80,
+        { id: 'ob', name: 'Ocean Beach', area: 'San Francisco', lat: 37.76, lon: -122.51, rating: 'good', offshoreDeg: 80,
           swell: { hsFt: 6.1, periodS: 14, dirDeg: 288, swellFt: 5.6, swellPeriodS: 14, swellDirDeg: 288, next: [6.4, 6.0] },
           wind: { mph: 7, gustMph: 12, fromDeg: 70 },
           tides: [tide(6, 45, 4.9, true), tide(12, 45, 2.4, false), tide(18, 3, 4.1, true), tide(23, 59, 0.9, false)] },
-        { id: 'pacifica', name: 'Pacifica', area: 'Linda Mar', rating: 'poor', offshoreDeg: 75,
+        { id: 'pacifica', name: 'Pacifica', area: 'Linda Mar', lat: 37.60, lon: -122.50, rating: 'poor', offshoreDeg: 75,
           swell: { hsFt: 3.2, periodS: 8, dirDeg: 270, swellFt: 2.9, swellPeriodS: 8, swellDirDeg: 270, next: [3.0, 2.6] },
           wind: { mph: 14, gustMph: 21, fromDeg: 260 },
           tides: [tide(5, 54, 4.6, true), tide(11, 59, 2.4, false), tide(17, 9, 3.9, true), tide(23, 32, 1.1, false)] }

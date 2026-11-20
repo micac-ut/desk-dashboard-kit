@@ -656,3 +656,14 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 .river-flow { font-size: 38px; margin-top: 4px; }
 .river-unit { font-size: 18px; color: #9a9a96; }
 .muted-note { font-size: 18px; color: #6c6c69; margin-top: 8px; }
+
+/* Surf pins on the map (anchor at the beach; label sits to the left, over the ocean). */
+.map-marker.surf { width: 0; height: 0; }
+.sp { position: absolute; left: 0; top: 0; white-space: nowrap; }
+.sp-dot { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 7px; border: 2px solid #0b0b0c; }
+.sp-box {
+  position: absolute; right: 12px; top: -22px;
+  background: rgba(11, 11, 12, 0.85); border: 2px solid; border-radius: 10px;
+  padding: 3px 9px; font-size: 16px; line-height: 20px; color: #ececea; text-align: left;
+}
+.sp-box b { font-size: 17px; font-weight: normal; }

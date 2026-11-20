@@ -1,6 +1,6 @@
 /*
  * Interactive weather map: CARTO dark base (OSM data), NEXRAD radar tiles,
- * work/home markers, and Windy-style animated wind streaks from Open-Meteo.
+ * surf-spot pins, optional work/home markers, and optional Windy-style wind streaks (off by default).
  * Pan and pinch-zoom freely; the map snaps back to the home view when idle.
  * ES5 only. Needs Leaflet 1.9 (window.L).
  */
@@ -14,6 +14,7 @@ window.DashMap = (function () {
   var windKey = '', windAt = 0, windReq = null, moveTimer = null;
   var particles = [], paused = false, moving = false, running = false, lastFrame = 0, stepScale = 1;
   var hooks = {};
+  var windOn = true, surfLayer = null, surfSpots = null, surfMarkers = [];
 
   // Drawn icons: the frame's Android 6 font has no glyph for the expand/close symbols.
   var ICON_EXPAND = '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" ' +
@@ -36,6 +37,7 @@ window.DashMap = (function () {
 
   function init(opts) {
     C = window.DASH_CONFIG.map;
+    windOn = C.wind.enabled !== false;
     hooks = opts || {};
     if (!window.L) { if (hooks.onError) { hooks.onError('Map library failed to load'); } return; }
     card = document.getElementById('radar-card');
@@ -53,24 +55,30 @@ window.DashMap = (function () {
     radar = L.tileLayer(radarUrl(), { opacity: C.radar.opacity, attribution: C.radar.attribution }).addTo(map);
 
     var w = C.locations.work, h = C.locations.home;
-    L.polyline([[w.lat, w.lon], [h.lat, h.lon]],
-      { color: '#ececea', opacity: 0.75, weight: 3, dashArray: '9 7', interactive: false }).addTo(map);
-    marker(w, 'work');
-    marker(h, 'home');
     homeBounds = L.latLngBounds([[w.lat, w.lon], [h.lat, h.lon]]);
+    if (C.showWorkHome !== false) {
+      L.polyline([[w.lat, w.lon], [h.lat, h.lon]],
+        { color: '#ececea', opacity: 0.75, weight: 3, dashArray: '9 7', interactive: false }).addTo(map);
+      marker(w, 'work');
+      marker(h, 'home');
+    }
+    surfLayer = L.layerGroup().addTo(map);
+    drawSurf(); // pins that arrived before the map was ready
     goHome();
 
-    setupCanvas();
+    if (windOn) { setupCanvas(); }
 
-    map.on('movestart zoomstart', function () { moving = true; clearCanvas(); });
+    map.on('moveend', layoutSurf);
+    map.on('movestart zoomstart', function () { moving = true; if (windOn) { clearCanvas(); } });
     map.on('moveend', function () {
       moving = false;
+      if (!windOn) { return; }
       if (moveTimer) { window.clearTimeout(moveTimer); }
       moveTimer = window.setTimeout(function () { fetchWind(false); }, 600);
       buildField();
       start();
     });
-    map.on('resize', function () { setupCanvas(); buildField(); });
+    map.on('resize', function () { if (windOn) { setupCanvas(); buildField(); } });
 
     // Any touch on the map restarts the idle timer.
     var el = map.getContainer();
@@ -83,8 +91,73 @@ window.DashMap = (function () {
 
     radarTimer = window.setInterval(refreshRadar, C.radar.refreshMin * 60000);
     stamp();
-    fetchWind(true);
-    window.setInterval(function () { fetchWind(true); }, C.wind.refreshMin * 60000);
+    if (windOn) {
+      fetchWind(true);
+      window.setInterval(function () { fetchWind(true); }, C.wind.refreshMin * 60000);
+    }
+  }
+
+  // ---------- surf pins ----------
+
+  function swellArrow(fromDeg, color) {
+    // Swell direction is where it comes FROM; the arrow points where it is traveling.
+    return '<svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-2px"><g transform="rotate(' + ((fromDeg + 180) % 360) +
+      ' 12 12)" stroke="' + color + '" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M12 21V4M5 11l7-7 7 7"/></g></svg>';
+  }
+
+  function surfColor(r) {
+    var s = window.DASH_CONFIG.surf;
+    return r === 'good' ? s.goodColor : (r === 'fair' ? s.fairColor : (r === 'big' ? s.bigColor : s.poorColor));
+  }
+
+  function drawSurf() {
+    if (!map || !surfLayer) { return; }
+    surfLayer.clearLayers();
+    surfMarkers = [];
+    if (!surfSpots || !surfSpots.length) { return; }
+    var pts = [], i;
+    for (i = 0; i < surfSpots.length; i++) {
+      var p = surfSpots[i], sw = p.swell || {};
+      if (p.lat == null || p.lon == null) { continue; }
+      var col = surfColor(p.rating), dir = sw.swellDirDeg != null ? sw.swellDirDeg : sw.dirDeg;
+      var size = sw.hsFt == null ? '--' : Math.round(sw.hsFt);
+      var html = '<div class="sp"><span class="sp-dot" style="background:' + col + '"></span>' +
+        '<div class="sp-box" style="border-color:' + col + '"><b>' + p.name + '</b><br>' + size + ' ft' +
+        (sw.periodS == null ? '' : ' &middot; ' + sw.periodS + 's') + (dir == null ? '' : ' ' + swellArrow(dir, col)) + '</div></div>';
+      var icon = L.divIcon({ className: 'map-marker surf', html: html, iconSize: [0, 0] });
+      surfMarkers.push(L.marker([p.lat, p.lon], { icon: icon, interactive: false, keyboard: false }).addTo(surfLayer));
+      pts.push([p.lat, p.lon]);
+    }
+    if (pts.length && C.showWorkHome === false) { homeBounds = L.latLngBounds(pts); }
+    layoutSurf();
+  }
+
+  // Keep neighbouring pin labels from covering each other: sort by screen position, push a label
+  // down when the one above it is closer than a label's height.
+  function layoutSurf() {
+    if (!map || !surfMarkers.length) { return; }
+    var items = [], i, BOX = 46;
+    for (i = 0; i < surfMarkers.length; i++) {
+      var ll = surfMarkers[i].getLatLng(), el = surfMarkers[i].getElement();
+      if (el) { items.push({ y: map.latLngToContainerPoint(ll).y, el: el }); }
+    }
+    items.sort(function (a, b) { return a.y - b.y; });
+    var prevTop = -1e9;
+    for (i = 0; i < items.length; i++) {
+      var top = -22, abs = items[i].y + top;
+      if (abs - prevTop < BOX) { top = prevTop + BOX - items[i].y; abs = items[i].y + top; }
+      prevTop = abs;
+      var box = items[i].el.querySelector('.sp-box');
+      if (box) { box.style.top = top + 'px'; }
+    }
+  }
+
+  // Called by the page whenever new surf data arrives (before or after the map is ready).
+  function setSurf(spots) {
+    surfSpots = spots;
+    drawSurf();
+    if (map && !expanded) { goHome(); }
   }
 
   function marker(loc, kind) {
@@ -98,7 +171,7 @@ window.DashMap = (function () {
   }
 
   function goHome() {
-    map.fitBounds(homeBounds, { padding: [70, 70], maxZoom: 12, animate: false });
+    map.fitBounds(homeBounds, { padding: [70, 70], maxZoom: C.homeMaxZoom || 12, animate: false });
   }
 
   // While someone is using the map, wind runs at the boost frame rate (30 fps); it drops back to
@@ -356,10 +429,10 @@ window.DashMap = (function () {
 
   // Stop animating while a takeover or night mode covers the map.
   function setPaused(p) {
-    if (p === paused) { return; }
+    if (!windOn || p === paused) { return; }
     paused = p;
     if (p) { clearCanvas(); } else if (C.wind.animate) { start(); } else { drawStatic(); }
   }
 
-  return { init: init, setPaused: setPaused };
+  return { init: init, setPaused: setPaused, setSurf: setSurf };
 })();

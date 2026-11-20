@@ -12,7 +12,7 @@ window.DASH_CONFIG = {
   features: { calendar: false, commute: false, surf: true, rivers: true },
 
   // Surf and river cards (data comes from /api/data; spots and gauges are set in netlify/lib/surf.mjs and rivers.mjs).
-  surf: { goodColor: '#8fd8a8', fairColor: '#f2b36b', poorColor: '#9a9a96' },
+  surf: { goodColor: '#8fd8a8', fairColor: '#f2b36b', poorColor: '#9a9a96', bigColor: '#f28b82' },
 
   calendars: {
     work:     { name: 'Work', color: '#F26A2E', mine: true },
@@ -57,6 +57,8 @@ window.DASH_CONFIG = {
       work: { name: 'Work', lat: 37.79, lon: -122.40 },
       home: { name: 'Home', lat: 37.76, lon: -122.44 }
     },
+    // Show the work/home markers and the dashed line between them. Off: the map frames the surf spots instead.
+    showWorkHome: false,
     minZoom: 5,
     maxZoom: 13,
     idleReturnSec: 60,         // snap back to the home view after this long untouched
@@ -77,6 +79,7 @@ window.DASH_CONFIG = {
 
     // Wind from Open-Meteo, sampled on a grid over the visible map.
     wind: {
+      enabled: false,          // false: no wind layer at all (no fetching, no animation, no arrows)
       grid: 6,                 // 6 x 6 = 36 points per fetch
       refreshMin: 15,
       animate: true,           // animated streaks; ?wind=static turns them off for testing

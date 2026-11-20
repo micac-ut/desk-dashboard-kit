@@ -8,11 +8,12 @@ const MAX_AGE = 25 * 60 * 1000;
 // offshore = the wind direction (degrees, "from") that grooms the waves.
 // swell = the swell directions (degrees) that work well at that break.
 // tide = NOAA CO-OPS station for the nearest predictions.
-// Marine model points sit just offshore (the model grid is coarse), not on the beach.
+// bigFt = open-water wave height (ft) above which the break is rated "big" (too large / dangerous) no matter how clean.
+// lat/lon: the marine model point, just offshore (the model grid is coarse). pin: the beach, for the map.
 export const SPOTS = [
-  { id: 'jacks',   name: 'Jacks',      area: 'Santa Cruz', lat: 36.94, lon: -122.01, tide: '9413745', offshore: 355, swell: [200, 300] },
-  { id: 'ob',      name: 'Ocean Beach', area: 'San Francisco', lat: 37.76, lon: -122.60, tide: '9414290', offshore: 80,  swell: [250, 310] },
-  { id: 'pacifica', name: 'Pacifica',   area: 'Linda Mar', lat: 37.59, lon: -122.57, tide: '9414131', offshore: 75,  swell: [240, 300] }
+  { id: 'jacks',   name: 'Jacks',      area: 'Santa Cruz', pin: [36.95, -121.97], lat: 36.94, lon: -122.01, tide: '9413745', offshore: 355, swell: [200, 300], bigFt: 9 },
+  { id: 'ob',      name: 'Ocean Beach', area: 'San Francisco', pin: [37.76, -122.51], lat: 37.76, lon: -122.60, tide: '9414290', offshore: 80,  swell: [250, 310], bigFt: 10 },
+  { id: 'pacifica', name: 'Pacifica',   area: 'Linda Mar', pin: [37.60, -122.50], lat: 37.59, lon: -122.57, tide: '9414131', offshore: 75,  swell: [240, 300], bigFt: 9 }
 ];
 
 async function getJSON(url) {
@@ -81,9 +82,10 @@ async function tides(station) {
 
 const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
 
-// Our own 3-level rating from size, period, wind and swell direction. Tune the numbers to taste.
+// Our own rating (poor / fair / good / big) from size, period, wind and swell direction. Tune the numbers to taste.
 export function rate(s, sw, wd) {
   if (sw.hsFt == null) return null;
+  if (sw.hsFt >= s.bigFt) return 'big'; // size overrides everything: don't call a High Surf Advisory day "good"
   let pts = 0;
   const h = sw.hsFt;
   pts += h < 2 ? 0 : h < 3 ? 1 : h <= 8 ? 2 : h <= 12 ? 1.5 : 0.5;          // size
@@ -104,7 +106,7 @@ async function oneSpot(s) {
   if (sw.status !== 'fulfilled') throw sw.reason;
   const w = wd.status === 'fulfilled' ? wd.value : null;
   return {
-    id: s.id, name: s.name, area: s.area,
+    id: s.id, name: s.name, area: s.area, lat: s.pin[0], lon: s.pin[1],
     swell: sw.value, wind: w,
     offshoreDeg: s.offshore,
     rating: rate(s, sw.value, w),
