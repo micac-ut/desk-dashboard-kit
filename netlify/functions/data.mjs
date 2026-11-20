@@ -6,11 +6,12 @@ import * as google from '../lib/google.mjs';
 import { getWeather } from '../lib/weather.mjs';
 import { getSurf } from '../lib/surf.mjs';
 import { getRivers } from '../lib/rivers.mjs';
+import { getMuni } from '../lib/muni.mjs';
 
 export default async (req) => {
   if (!hasKey(req)) return json({ error: 'unauthorized' }, 401);
 
-  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, surf: null, rivers: null, status: {} };
+  const out = { generatedAt: Date.now(), strava: null, google: null, weather: null, surf: null, rivers: null, muni: null, status: {} };
 
   try {
     out.weather = await getWeather();
@@ -26,6 +27,14 @@ export default async (req) => {
   } catch (err) {
     console.error(err);
     out.status.surf = 'error';
+  }
+
+  try {
+    out.muni = await getMuni();
+    out.status.muni = out.muni ? (out.muni.stale ? 'stale' : 'ok') : 'not-configured';
+  } catch (err) {
+    console.error(err);
+    out.status.muni = 'error';
   }
 
   try {

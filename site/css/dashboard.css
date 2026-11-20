@@ -682,3 +682,16 @@ a.ev-link:hover .ev-title { text-decoration: underline; }
 .banner-row.soon { background: #161614; border-color: #4a3f26; }
 .banner-text { font-size: 28px; flex: 1; }
 .banner-tag { font-size: 17px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Muni card */
+.card-muni { padding: 12px 20px; }
+.muni-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.muni-head .card-title { margin-bottom: 0; }
+.muni-pill { font-size: 17px; text-transform: uppercase; letter-spacing: 1px; border: 2px solid; border-radius: 14px; padding: 2px 10px; }
+.muni-alert { font-size: 18px; color: #f2b36b; margin: 4px 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.muni-row { display: flex; align-items: baseline; padding: 5px 0; border-top: 1px solid #26262a; }
+.muni-place { width: 250px; font-size: 22px; }
+.muni-arr { flex: 1; font-size: 26px; white-space: nowrap; }
+.muni-arr b { font-weight: normal; color: #9a9a96; }
+.muni-dir, .muni-unit { font-size: 17px; color: #9a9a96; text-transform: uppercase; }
+.muni-none { font-size: 18px; color: #6c6c69; }

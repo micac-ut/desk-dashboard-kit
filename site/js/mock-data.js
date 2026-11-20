@@ -94,6 +94,22 @@ window.buildMockData = function (base) {
       ]
     },
 
+    muni: {
+      line: 'N', alerts: [], fetchedAt: base.getTime(),
+      places: [
+        { id: 'duboce', name: 'Church & Duboce', arrivals: [
+          { line: 'N', dir: 'OB', dest: 'Ocean Beach', t: base.getTime() + 4 * 60000 },
+          { line: 'N', dir: 'IB', dest: 'Caltrain', t: base.getTime() + 9 * 60000 },
+          { line: 'N', dir: 'OB', dest: 'Ocean Beach', t: base.getTime() + 13 * 60000 },
+          { line: 'N', dir: 'IB', dest: 'Caltrain', t: base.getTime() + 19 * 60000 } ] },
+        { id: 'church', name: 'Church Station east', arrivals: [
+          { line: 'J', dir: 'IB', dest: 'Embarcadero', t: base.getTime() + 3 * 60000 },
+          { line: 'N', dir: 'IB', dest: 'Caltrain', t: base.getTime() + 9 * 60000 },
+          { line: 'K', dir: 'IB', dest: 'Embarcadero', t: base.getTime() + 12 * 60000 },
+          { line: 'M', dir: 'IB', dest: 'Embarcadero', t: base.getTime() + 16 * 60000 } ] }
+      ]
+    },
+
     rivers: {
       fetchedAt: base.getTime(),
       rivers: [

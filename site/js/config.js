@@ -9,7 +9,7 @@ window.DASH_CONFIG = {
   timeZone: 'America/Los_Angeles',
 
   // Turn whole sections on or off. The calendar and commute code stays in place, just hidden.
-  features: { calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
+  features: { muni: true, calendar: false, tasks: false, commute: false, alerts: false, strava: false, surf: true, rivers: true },
 
   // Recurring reminders shown as a banner under the clock, on the due day only (set daysBefore: 1 to
   // also get a heads-up the day before). dayOfMonth is clamped to the month's last day. Tap the banner on the day to mark it done; it

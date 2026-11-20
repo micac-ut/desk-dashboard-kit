@@ -4,6 +4,7 @@ import * as google from '../lib/google.mjs';
 import { refreshWeather } from '../lib/weather.mjs';
 import { refreshSurf } from '../lib/surf.mjs';
 import { refreshRivers } from '../lib/rivers.mjs';
+import { refreshMuni } from '../lib/muni.mjs';
 
 export default async () => {
   try {
@@ -15,6 +16,11 @@ export default async () => {
     await refreshSurf();
   } catch (err) {
     console.error('Surf refresh failed', err);
+  }
+  try {
+    await refreshMuni();
+  } catch (err) {
+    console.error('Muni refresh failed', err);
   }
   try {
     await refreshRivers();

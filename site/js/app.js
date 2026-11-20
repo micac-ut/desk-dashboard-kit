@@ -159,6 +159,57 @@
       '<path d="M12 20V4M6 10l6-6 6 6"/></g></svg>';
   }
 
+  // ---------- Muni ----------
+
+  function minsText(t, n) {
+    var m = Math.round((t - n.getTime()) / 60000);
+    return m <= 0 ? 'now' : String(m);
+  }
+  function upcoming(list, n) {
+    var out = [];
+    for (var i = 0; i < list.length; i++) { if (list[i].t > n.getTime() - 30000) { out.push(list[i]); } }
+    return out;
+  }
+  function joinMins(list, n, max) {
+    var s = [];
+    for (var i = 0; i < list.length && i < max; i++) { s.push(minsText(list[i].t, n)); }
+    return s.join(', ');
+  }
+
+  function renderMuni(n) {
+    var el = $('muni'), m = D.muni;
+    if (C.features.muni === false || !m) { el.className = 'hidden'; return; }
+    var status;
+    if (m.alerts == null) { status = '<span class="muni-pill" style="color:#9a9a96;border-color:#9a9a96">Status unknown</span>'; }
+    else if (!m.alerts.length) { status = '<span class="muni-pill" style="color:#8fd8a8;border-color:#8fd8a8">Normal service</span>'; }
+    else { status = '<span class="muni-pill" style="color:#f2b36b;border-color:#f2b36b">' + m.alerts.length + (m.alerts.length > 1 ? ' alerts' : ' alert') + '</span>'; }
+    var html = '<div class="muni-head"><div class="card-title">Muni ' + esc(m.line) + ' Judah</div>' + status + '</div>';
+    if (m.alerts && m.alerts.length) {
+      html += '<div class="muni-alert">' + esc(m.alerts[0].header) + '</div>';
+    }
+    for (var i = 0; i < m.places.length; i++) {
+      var p = m.places[i], list = upcoming(p.arrivals || [], n), body = '';
+      if (!p.stops && p.stops !== undefined) { body = '<span class="muni-none">stop not found</span>'; }
+      else if (!list.length) { body = '<span class="muni-none">no arrivals shown</span>'; }
+      else if (p.id === 'duboce') {
+        var ib = [], ob = [];
+        for (var j = 0; j < list.length; j++) { (list[j].dir === 'IB' ? ib : ob).push(list[j]); }
+        body = '<span class="muni-dir">In</span> ' + (ib.length ? joinMins(ib, n, 2) : '--') +
+          ' <span class="muni-dir">&nbsp; Out</span> ' + (ob.length ? joinMins(ob, n, 2) : '--') + ' <span class="muni-unit">min</span>';
+      } else {
+        var parts = [];
+        for (var k = 0; k < list.length && k < 4; k++) {
+          parts.push('<b>' + esc(list[k].line) + '</b> ' + minsText(list[k].t, n));
+        }
+        body = parts.join(' &middot; ') + ' <span class="muni-unit">min</span>';
+      }
+      html += '<div class="muni-row"><div class="muni-place">' + esc(p.name) + '</div><div class="muni-arr">' + body + '</div></div>';
+    }
+    if (m.stale) { html += '<div class="muni-none">Showing older data</div>'; }
+    el.className = 'card card-muni';
+    el.innerHTML = html;
+  }
+
   // ---------- reminders (banner) ----------
 
   function lastDayOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
@@ -872,6 +923,13 @@
         D.surfStale = !!data.surf.stale;
         renderSurf(now());
       }
+      if (data.muni) {
+        D.muni = data.muni;
+        renderMuni(now());
+      } else if (data.status && data.status.muni === 'not-configured') {
+        D.muni = null; // live site without a 511 key: hide the card rather than show sample times
+        renderMuni(now());
+      }
       if (data.rivers) {
         D.rivers = data.rivers;
         renderRivers();
@@ -917,6 +975,7 @@
 
   function renderAll(n) {
     renderBanner(n);
+    renderMuni(n);
     renderSurf(n);
     renderRivers();
     renderEvents(n);
@@ -938,6 +997,7 @@
       renderCommute(n);
       renderSurf(n); // next-tide text moves forward
       renderBanner(n);
+      renderMuni(n); // minutes tick down
       if (minute % 5 === 0) { updateSky(); } // the sun moves; repaint the sky every 5 minutes
     }
     renderOverlay(n);
