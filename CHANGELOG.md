@@ -4,6 +4,13 @@ All notable changes to this project are recorded here. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- Surf card (Jacks, Ocean Beach, Pacifica): Open-Meteo marine + wind and NOAA tides, with a simple poor/fair/good rating (`netlify/lib/surf.mjs`).
+- Rivers card (South Fork American at Chili Bar, Lower American): parsed from Dreamflows with a USGS fallback and a trend arrow (`netlify/lib/rivers.mjs`).
+- `features` switches in `site/js/config.js`; calendar and commute are off (hidden, not removed).
+
+### Changed
+- Defaults now San Francisco: time zone `America/Los_Angeles`, forecast point, placeholder map markers.
 ### Changed
 - Strava athlete ID is stored as a string from `id_str`, ready for Strava's 64-bit IDs (from 2027-06-01). Nothing used the ID, so behavior is unchanged; any future use of activity IDs should read `id_str` too.
 
