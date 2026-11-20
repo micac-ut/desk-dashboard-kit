@@ -4,6 +4,9 @@ All notable changes to this project are recorded here. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+- `DASH_KEY` rotated.
+
 ### Added
 - Muni N Judah status and next arrivals (Church & Duboce, Church Station east) via 511.org (`netlify/lib/muni.mjs`).
 - Surf card (Jacks, Ocean Beach, Pacifica): Open-Meteo marine + wind and NOAA tides, with a simple poor/fair/good rating (`netlify/lib/surf.mjs`).
