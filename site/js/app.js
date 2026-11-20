@@ -244,7 +244,15 @@
     for (var i = 0; i < resorts.length; i++) {
       var r = resorts[i];
       var fresh = r.last24hIn > 0, coming = r.next24hIn > 0;
-      var sub = r.tempF + '°' + (r.nowSnowing ? ' · snowing now' : '');
+      // CDEC station data posts with a lag; show the date it's actually from if it isn't today.
+      var staleTag = '';
+      if (r.last24hAsOf) {
+        var asOf = new Date(r.last24hAsOf + 'T00:00:00');
+        if (asOf.getFullYear() !== n.getFullYear() || asOf.getMonth() !== n.getMonth() || asOf.getDate() !== n.getDate()) {
+          staleTag = ' · as of ' + DAYS3[asOf.getDay()];
+        }
+      }
+      var sub = r.tempF + '°' + (r.nowSnowing ? ' · snowing now' : '') + staleTag;
       html += '<div class="snow-row">' +
         '<div class="snow-name">' + esc(r.name) + '<div class="surf-sub">' + sub + '</div></div>' +
         '<div class="snow-vals">' +
